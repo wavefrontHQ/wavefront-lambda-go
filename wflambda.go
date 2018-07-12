@@ -30,6 +30,14 @@ var (
 	isColdStart             = true
 )
 
+/* Returns the Wavefront Lambda wrapper. The wrapper collects aws lambda's
+   standard metrics and reports it directly to the specified wavefront url. It
+   requires the following Environmental variables to be set:
+   1.WAVEFRONT_URL : https://<INSTANCE>.wavefront.com
+   2.WAVEFRONT_API_TOKEN : Wavefront API token with Direct Data Ingestion permission
+   3.IS_REPORT_STANDARD_METRICS : Set to False to not report standard lambda
+                                 metrics directly to wavefront.
+*/
 func Wrapper(lambdaHandler interface{}) interface{} {
 	handlerType := reflect.TypeOf(lambdaHandler)
 	handlerValue := reflect.ValueOf(lambdaHandler)
@@ -59,6 +67,7 @@ func Wrapper(lambdaHandler interface{}) interface{} {
 
 	isReportStandardMetrics = getAndValidateLambdaEnvironment()
 	if !isReportStandardMetrics {
+		// Returns a plain wrapper function without gathering standard lambda metrics.
 		return func(ctx context.Context, payload json.RawMessage) (response interface{}, lambdaHandlerError error) {
 			defer func() {
 				reportMetrics(ctx)
@@ -243,6 +252,7 @@ func reportMetrics(ctx context.Context) {
 	}
 }
 
+// Util method to returns the standard lambda metric name.
 func getStandardLambdaMetricName(metric string, isEvent bool) string {
 	const metric_prefix string = "aws.lambda.wf."
 	const metric_event_suffix string = "_event"
@@ -252,6 +262,8 @@ func getStandardLambdaMetricName(metric string, isEvent bool) string {
 	return strings.Join([]string{metric_prefix, metric}, "")
 }
 
+// Util method to validate the specified environmental variables and return if standard lambda Metrics
+// should be collected by the wrapper.
 func getAndValidateLambdaEnvironment() bool {
 	// Validate environmental variables required by wavefrontLambda wrapper.
 	server = os.Getenv("WAVEFRONT_URL")

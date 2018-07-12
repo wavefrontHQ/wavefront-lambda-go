@@ -23,17 +23,17 @@ Wrap your AWS Lambda handler function with wavefront_lambda.Wrapper(LambdaHandle
 package main
 
 import (
-	"github.com/wavefronthq/go-metrics-wavefront"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/wavefronthq/go-metrics-wavefront"
 )
 
 // Lambda handler function that includes the code which will be executed when lambda is invoked.
 func HandleLambdaRequest() {
-  // your code
+	// your code
 }
 
 func main() {
-  // Wrap your Lambda Handler Function with wflambda.Wrapper
+	// Wrap your Lambda Handler Function with wflambda.Wrapper
 	lambda.Start(wavefront_lambda.Wrapper(HandleLambdaRequest))
 }
 ```
@@ -94,15 +94,18 @@ func HandleLambdaRequest() {
 	  "key4": "val4",
 	  "key3": "val3",
 	}
+
 	// Register Counter with desired tags.
 	customRawCounter := metrics.NewCounter()
 	wavefront.RegisterMetric("counter", customRawCounter, appTags)
 	customRawCounter.Inc(1)
+
 	// Register Delta Counter with desired tags.
 	customDeltaCounter := metrics.NewCounter()
 	deltaCounterName := wavefront.DeltaCounterName("deltaCounter")
 	wavefront.RegisterMetric(deltaCounterName, customDeltaCounter, appTags)
 	customDeltaCounter.Inc(1)
+
 	// Register Gauge with desired tags.
 	gaugeValue = metrics.NewGauge()
 	wavefront.RegisterMetric("gaugeValue", gaugeValue, appTags)

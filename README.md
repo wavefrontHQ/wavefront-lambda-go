@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront"
-  "github.com/wavefronthq/wavefront-lambda-go"
+	"github.com/wavefronthq/wavefront-lambda-go"
 )
 
 // Lambda handler function that includes the code which will be executed when lambda is invoked.

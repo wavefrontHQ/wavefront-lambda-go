@@ -24,7 +24,9 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront"
+  "github.com/wavefronthq/wavefront-lambda-go"
 )
 
 // Lambda handler function that includes the code which will be executed when lambda is invoked.
@@ -34,7 +36,7 @@ func HandleLambdaRequest() {
 
 func main() {
 	// Wrap your Lambda Handler Function with wflambda.Wrapper
-	lambda.Start(wavefront_lambda.Wrapper(HandleLambdaRequest))
+	lambda.Start(wflambda.Wrapper(HandleLambdaRequest))
 }
 ```
 
@@ -81,18 +83,19 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront"
+	"github.com/wavefronthq/wavefront-lambda-go"
 )
 
 // Lambda handler function that includes the code which will be executed when lambda is invoked.
 func HandleLambdaRequest() {
 	// Point Tags
 	appTags := map[string]string{
-		"source":"ExampleLambdaFunction"
-	  "key2": "val1",
-	  "key1": "val2",
-	  "key0": "val0",
-	  "key4": "val4",
-	  "key3": "val3",
+		"source": "ExampleLambdaFunction",
+		"key2":   "val1",
+		"key1":   "val2",
+		"key0":   "val0",
+		"key4":   "val4",
+		"key3":   "val3",
 	}
 
 	// Register Counter with desired tags.
@@ -107,9 +110,9 @@ func HandleLambdaRequest() {
 	customDeltaCounter.Inc(1)
 
 	// Register Gauge with desired tags.
-	gaugeValue = metrics.NewGauge()
+	gaugeValue := metrics.NewGauge()
 	wavefront.RegisterMetric("gaugeValue", gaugeValue, appTags)
-	gaugeValue.Update(5.5)
+	gaugeValue.Update(551)
 }
 
 func main() {

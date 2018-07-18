@@ -1,4 +1,4 @@
-# wavefront-lambda-go
+# wavefront-lambda-go [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go)
 
 This is a Wavefront Go wrapper for AWS Lambda to enable reporting standard lambda metrics and custom app metrics directly to wavefront.
 

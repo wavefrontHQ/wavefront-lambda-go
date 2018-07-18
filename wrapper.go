@@ -3,9 +3,10 @@ package wflambda
 import (
 	"context"
 	"encoding/json"
-	"github.com/rcrowley/go-metrics"
 	"reflect"
 	"time"
+
+	"github.com/rcrowley/go-metrics"
 )
 
 type lambdaHandlerFunction func(context.Context, json.RawMessage) (interface{}, error)

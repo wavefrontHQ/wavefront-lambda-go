@@ -112,6 +112,11 @@ func HandleLambdaRequest() {
 	gaugeValue := metrics.NewGauge()
 	wavefront.RegisterMetric("gaugeValue", gaugeValue, appTags)
 	gaugeValue.Update(551)
+
+	// Register Float Gauge with desired tags.
+	gaugeFloatValue := metrics.NewGaugeFloat64()
+	wavefront.RegisterMetric("gaugeFloatValue", gaugeFloatValue, appTags)
+	gaugeFloatValue.Update(551.4)
 }
 
 func main() {

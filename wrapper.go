@@ -3,10 +3,10 @@ package wflambda
 import (
 	"context"
 	"encoding/json"
+	"github.com/rcrowley/go-metrics"
+	"log"
 	"reflect"
 	"time"
-	"log"
-	"github.com/rcrowley/go-metrics"
 )
 
 type lambdaHandlerFunction func(context.Context, json.RawMessage) (interface{}, error)
@@ -25,7 +25,7 @@ var (
 	invocationEventCounter    metrics.Counter
 	errCounter                metrics.Counter
 	errEventCounter           metrics.Counter
-	durationGauge             metrics.Gauge
+	durationGauge             metrics.GaugeFloat64
 )
 
 // Returns the Wavefront Lambda wrapper. The wrapper collects aws lambda's
@@ -104,8 +104,7 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 	lambdaResponse := handlerValue.Call(args)
 	executionDuration := time.Since(start)
 	// Set duration gauge value in milliseconds.
-	log.Println("Duration ::", executionDuration.Nanoseconds()/1e6)
-	updateGauge(durationGauge, executionDuration.Nanoseconds()/1e6, reportStandardMetrics)
+	updateGauge(durationGauge, executionDuration.Seconds()*1000, reportStandardMetrics)
 	if len(lambdaResponse) == 0 {
 		return nil, nil
 	}

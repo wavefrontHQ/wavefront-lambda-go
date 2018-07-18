@@ -18,7 +18,7 @@ func incrementCounter(counter metrics.Counter, value int64, report bool) {
 	}
 }
 
-func updateGauge(gauge metrics.Gauge, value int64, report bool) {
+func updateGauge(gauge metrics.GaugeFloat64, value float64, report bool) {
 	if report {
 		gauge.Update(value)
 	}
@@ -47,7 +47,7 @@ func registerStandardLambdaMetrics() {
 	wavefront.RegisterMetric(getStandardLambdaMetricName("error", true), errEventCounter, nil)
 
 	// Register duration gauge
-	durationGauge = metrics.NewGauge()
+	durationGauge = metrics.NewGaugeFloat64()
 	wavefront.RegisterMetric(getStandardLambdaMetricName("duration", false), durationGauge, nil)
 }
 

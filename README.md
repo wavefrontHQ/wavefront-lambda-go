@@ -54,9 +54,6 @@ The Lambda wrapper sends the following standard lambda metrics to wavefront:
 | aws.lambda.wf.coldstart_event.count| Counter           | Count of number of cold starts.                                         |
 | aws.lambda.wf.duration.value      | Gauge              | Execution time of the Lambda handler function in milliseconds.          |
 
-Note: Having the same metric name for any two types of metrics will result in only one time series at the server and thus cause collisions.
-In general, all metric names should be different. In case you have metrics that you want to track as both a Counter and Delta Counter, consider adding a relevant suffix to one of the metrics to differentiate one metric name from another.
-
 The Lambda wrapper adds the following point tags to all metrics sent to wavefront:
 
 | Point Tag             | Description                                                                   |
@@ -68,6 +65,9 @@ The Lambda wrapper adds the following point tags to all metrics sent to wavefron
 | FunctionName          | The name of Lambda function.                                                  |
 | Resource              | The name and version/alias of Lambda function. (Ex: DemoLambdaFunc:aliasProd) |
 | EventSourceMappings   | AWS Function Name (In case of an event source mapping Lambda invocation only,)|
+
+Note: Having the same metric name for any two types of metrics will result in only one time series at the server and thus cause collisions.
+In general, all metric names should be different. In case you have metrics that you want to track as both a Counter and Delta Counter, consider adding a relevant suffix to one of the metrics to differentiate one metric name from another.
 
 ## Custom Lambda Metrics
 
@@ -90,7 +90,6 @@ import (
 func HandleLambdaRequest() {
 	// Point Tags
 	appTags := map[string]string{
-		"source": "ExampleLambdaFunction",
 		"key2":   "val1",
 		"key1":   "val2",
 		"key0":   "val0",

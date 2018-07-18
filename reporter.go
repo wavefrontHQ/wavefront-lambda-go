@@ -12,18 +12,21 @@ import (
 	"github.com/wavefronthq/go-metrics-wavefront"
 )
 
+// Increment counter if report is true
 func incrementCounter(counter metrics.Counter, value int64, report bool) {
 	if report {
 		counter.Inc(value)
 	}
 }
 
+// Update gauge value if report is true
 func updateGaugeFloat64(gauge metrics.GaugeFloat64, value float64, report bool) {
 	if report {
 		gauge.Update(value)
 	}
 }
 
+// Register the standard lambda metrics.
 func registerStandardLambdaMetrics() {
 	// Register cold start counter.
 	csCounter = metrics.NewCounter()

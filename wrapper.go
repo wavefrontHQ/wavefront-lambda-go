@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/rcrowley/go-metrics"
-	"log"
 	"reflect"
 	"time"
 )

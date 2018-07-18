@@ -3,9 +3,10 @@ package wflambda
 import (
 	"context"
 	"encoding/json"
-	"github.com/rcrowley/go-metrics"
 	"reflect"
 	"time"
+
+	"github.com/rcrowley/go-metrics"
 )
 
 type lambdaHandlerFunction func(context.Context, json.RawMessage) (interface{}, error)
@@ -20,13 +21,13 @@ var (
 	invocationEventCounter  metrics.Counter
 	errCounter              metrics.Counter
 	errEventCounter         metrics.Counter
-	dGauge                  metrics.Gauge
+	durationGauge           metrics.Gauge
 	coldStart               = true
 )
 
  // Returns the Wavefront Lambda wrapper. The wrapper collects aws lambda's
  //   standard metrics and reports it directly to the specified wavefront url. It
- //   requires the following Environmental variables to be set:
+ //   requires the following Environment variables to be set:
  //   1.WAVEFRONT_URL : https://<INSTANCE>.wavefront.com
  //   2.WAVEFRONT_API_TOKEN : Wavefront API token with Direct Data Ingestion permission
  //   3.IS_REPORT_STANDARD_METRICS : Set to False to not report standard lambda
@@ -96,7 +97,7 @@ func Wrapper(lambdaHandler interface{}) interface{} {
 		lambdaResponse := handlerValue.Call(args)
 		executionDuration := time.Since(start)
     // Set duration gauge value in milliseconds.
-    updateGauge(dGauge, executionDuration.Nanoseconds() / 1e6, reportStandardMetrics)
+    updateGauge(durationGauge, executionDuration.Nanoseconds() / 1e6, reportStandardMetrics)
 		if len(lambdaResponse) == 0 {
 			return nil, nil
 		}

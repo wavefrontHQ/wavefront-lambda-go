@@ -6,18 +6,18 @@ import (
 	"reflect"
 )
 
-// Validate the input lambda handler. This is taken from the below amazon source code for go lambda handlers
+// Validate the input lambda handler based on source code at
 // https://github.com/aws/aws-lambda-go/blob/ea03c2814414b2223eff860ed2286a83ed8a195c/lambda/handler.go#L75
-func validateLambdaHandler(lambdaHandler interface{}) (bool, error){
-  if lambdaHandler == nil {
-    return false, fmt.Errorf("handler is nil")
-  }
-  handlerType := reflect.TypeOf(lambdaHandler)
-  // Validate lambdaHandler Kind.
-  if handlerType.Kind() != reflect.Func {
-    return false, fmt.Errorf("handler kind %s is not %s", handlerType.Kind(), reflect.Func)
-  }
-  takesContext, err := validateArguments(handlerType)
+func validateLambdaHandler(lambdaHandler interface{}) (bool, error) {
+	if lambdaHandler == nil {
+		return false, fmt.Errorf("handler is nil")
+	}
+	handlerType := reflect.TypeOf(lambdaHandler)
+	// Validate lambdaHandler Kind.
+	if handlerType.Kind() != reflect.Func {
+		return false, fmt.Errorf("handler kind %s is not %s", handlerType.Kind(), reflect.Func)
+	}
+	takesContext, err := validateArguments(handlerType)
 	if err != nil {
 		return false, err
 	}

@@ -18,7 +18,7 @@ func incrementCounter(counter metrics.Counter, value int64, report bool) {
 	}
 }
 
-func updateGauge(gauge metrics.GaugeFloat64, value float64, report bool) {
+func updateGaugeFloat64(gauge metrics.GaugeFloat64, value float64, report bool) {
 	if report {
 		gauge.Update(value)
 	}

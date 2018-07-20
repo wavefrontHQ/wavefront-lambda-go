@@ -1,4 +1,4 @@
-# wavefront-lambda-go [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go)
+# wavefront-lambda-go
 
 This is a Wavefront Go wrapper for AWS Lambda to enable reporting standard lambda metrics and custom app metrics directly to wavefront.
 
@@ -10,10 +10,10 @@ Go 1.x
 go get github.com/wavefrontHQ/wavefront-lambda-go.git
 ```
 
-## Environmental variables
+## Environment variables
 WAVEFRONT_URL = https://\<INSTANCE>.wavefront.com  
 WAVEFRONT_API_TOKEN = Wavefront API token with Direct Data Ingestion permission.  
-IS_REPORT_STANDARD_METRICS = Set to False or false to not report standard lambda metrics directly to wavefront.  
+REPORT_STANDARD_METRICS = Set to False or false to not report standard lambda metrics directly to wavefront.  
 
 ## Usage
 

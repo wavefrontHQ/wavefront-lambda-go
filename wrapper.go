@@ -33,7 +33,7 @@ var (
 //   requires the following Environment variables to be set:
 //   1.WAVEFRONT_URL : https://<INSTANCE>.wavefront.com
 //   2.WAVEFRONT_API_TOKEN : Wavefront API token with Direct Data Ingestion permission
-//   3.IS_REPORT_STANDARD_METRICS : Set to False to not report standard lambda
+//   3.REPORT_STANDARD_METRICS : Set to False to not report standard lambda
 //                                 metrics directly to wavefront.
 
 func Wrapper(lambdaHandler interface{}) interface{} {

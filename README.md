@@ -10,10 +10,10 @@ Go 1.x
 go get github.com/wavefrontHQ/wavefront-lambda-go.git
 ```
 
-## Environmental variables
+## Environment variables
 WAVEFRONT_URL = https://\<INSTANCE>.wavefront.com  
 WAVEFRONT_API_TOKEN = Wavefront API token with Direct Data Ingestion permission.  
-IS_REPORT_STANDARD_METRICS = Set to False or false to not report standard lambda metrics directly to wavefront.  
+REPORT_STANDARD_METRICS = Set to False or false to not report standard lambda metrics directly to wavefront.  
 
 ## Usage
 

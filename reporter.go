@@ -110,19 +110,19 @@ func getStandardLambdaMetricName(metric string, isEvent bool) string {
 	return strings.Join([]string{metric_prefix, metric}, "")
 }
 
-// Util method to validate the specified environmental variables and return if standard lambda Metrics
+// Util method to validate the specified environment variables and return if standard lambda Metrics
 // should be collected by the wrapper.
 func getAndValidateLambdaEnvironment() bool {
-	// Validate environmental variables required by wavefrontLambda wrapper.
+	// Validate environment variables required by wavefrontLambda wrapper.
 	server = os.Getenv("WAVEFRONT_URL")
 	if server == "" {
-		log.Panicf("Environmental variable WAVEFRONT_URL is not set.")
+		log.Panicf("Environment variable WAVEFRONT_URL is not set.")
 	}
 	authToken = os.Getenv("WAVEFRONT_API_TOKEN")
 	if authToken == "" {
-		log.Panicf("Environmental variable WAVEFRONT_API_TOKEN is not set.")
+		log.Panicf("Environment variable WAVEFRONT_API_TOKEN is not set.")
 	}
-	reportStandardLambdaMetrics := os.Getenv("IS_REPORT_STANDARD_METRICS")
+	reportStandardLambdaMetrics := os.Getenv("REPORT_STANDARD_METRICS")
 	reportStandardMetrics := true
 	if reportStandardLambdaMetrics == "False" || reportStandardLambdaMetrics == "false" {
 		reportStandardMetrics = false

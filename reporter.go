@@ -30,28 +30,22 @@ func updateGaugeFloat64(gauge metrics.GaugeFloat64, value float64, report bool) 
 func registerStandardLambdaMetrics() {
 	// Register cold start counter.
 	csCounter = metrics.NewCounter()
-	csCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("coldstarts", false))
+	csCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("coldstarts"))
 	wavefront.RegisterMetric(csCounterName, csCounter, nil)
-	csEventCounter = metrics.NewCounter()
-	wavefront.RegisterMetric(getStandardLambdaMetricName("coldstart", true), csEventCounter, nil)
 
 	// Register invocations counter.
 	invocationsCounter = metrics.NewCounter()
-	invocationsCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("invocations", false))
+	invocationsCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("invocations"))
 	wavefront.RegisterMetric(invocationsCounterName, invocationsCounter, nil)
-	invocationEventCounter = metrics.NewCounter()
-	wavefront.RegisterMetric(getStandardLambdaMetricName("invocation", true), invocationEventCounter, nil)
 
 	// Register Error counter
 	errCounter = metrics.NewCounter()
-	errCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("errors", false))
+	errCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("errors"))
 	wavefront.RegisterMetric(errCounterName, errCounter, nil)
-	errEventCounter = metrics.NewCounter()
-	wavefront.RegisterMetric(getStandardLambdaMetricName("error", true), errEventCounter, nil)
 
 	// Register duration gauge
 	durationGauge = metrics.NewGaugeFloat64()
-	wavefront.RegisterMetric(getStandardLambdaMetricName("duration", false), durationGauge, nil)
+	wavefront.RegisterMetric(getStandardLambdaMetricName("duration"), durationGauge, nil)
 }
 
 // Method to send all metrics in the registry to wavefront.
@@ -101,12 +95,8 @@ func reportMetrics(ctx context.Context) {
 // getStandardLambdaMetricName("invocation", true) returns "aws.lambda.wf.invocation_event"
 // getStandardLambdaMetricName("invocations", false) returns "aws.lambda.wf.invocations"
 
-func getStandardLambdaMetricName(metric string, isEvent bool) string {
+func getStandardLambdaMetricName(metric string) string {
 	const metric_prefix string = "aws.lambda.wf."
-	const metric_event_suffix string = "_event"
-	if isEvent {
-		return strings.Join([]string{metric_prefix, metric, metric_event_suffix}, "")
-	}
 	return strings.Join([]string{metric_prefix, metric}, "")
 }
 

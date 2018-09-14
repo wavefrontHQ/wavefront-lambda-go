@@ -20,11 +20,8 @@ var (
 	handlerValue              reflect.Value
 	coldStart                 = true
 	csCounter                 metrics.Counter
-	csEventCounter            metrics.Counter
 	invocationsCounter        metrics.Counter
-	invocationEventCounter    metrics.Counter
 	errCounter                metrics.Counter
-	errEventCounter           metrics.Counter
 	durationGauge             metrics.GaugeFloat64
 )
 
@@ -61,11 +58,9 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 			err = e
 			// Set error counters
 			incrementCounter(errCounter, 1, reportStandardMetrics)
-			incrementCounter(errEventCounter, 1, reportStandardMetrics)
 		} else if lambdaHandlerError != nil {
 			// Set error counters
 			incrementCounter(errCounter, 1, reportStandardMetrics)
-			incrementCounter(errEventCounter, 1, reportStandardMetrics)
 		}
 		reportMetrics(ctx)
 		metrics.DefaultRegistry.UnregisterAll()
@@ -94,12 +89,10 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 	if coldStart {
 		// Set cold start counter
 		incrementCounter(csCounter, 1, reportStandardMetrics)
-		incrementCounter(csEventCounter, 1, reportStandardMetrics)
 		coldStart = false
 	}
 	// Set invocations counter.
 	incrementCounter(invocationsCounter, 1, reportStandardMetrics)
-	incrementCounter(invocationEventCounter, 1, reportStandardMetrics)
 	start := time.Now()
 	lambdaResponse := handlerValue.Call(args)
 	executionDuration := time.Since(start)

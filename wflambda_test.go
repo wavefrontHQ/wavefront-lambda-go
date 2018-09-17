@@ -6,13 +6,8 @@ import (
 )
 
 func TestGetStandardLambdaMetricName(t *testing.T) {
-	actualName := getStandardLambdaMetricName("customMetric", true)
-	expectedName := "aws.lambda.wf.customMetric_event"
-	if actualName != expectedName {
-		t.Error("Metric names don't match ", expectedName, actualName)
-	}
-	actualName = getStandardLambdaMetricName("customMetrics", false)
-	expectedName = "aws.lambda.wf.customMetrics"
+	actualName := getStandardLambdaMetricName("customMetrics")
+	expectedName := "aws.lambda.wf.customMetrics"
 	if actualName != expectedName {
 		t.Error("Metric names don't match ", expectedName, actualName)
 	}

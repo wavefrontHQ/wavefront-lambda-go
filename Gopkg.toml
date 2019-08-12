@@ -3,8 +3,8 @@
   version = "1.12.1"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/rcrowley/go-metrics"
+  revision = "9beb055b7962d16947a14e1cd718098a2431e20e"
 
 [[constraint]]
   name = "github.com/wavefronthq/go-metrics-wavefront"

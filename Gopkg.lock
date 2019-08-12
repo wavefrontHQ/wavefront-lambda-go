@@ -8,7 +8,6 @@
   version = "v1.12.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   revision = "9beb055b7962d16947a14e1cd718098a2431e20e"
@@ -22,6 +21,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9c6a484f7af7d37bef549cc65abd186391c9211bba2d381bb658029ff6a3fc26"
+  inputs-digest = "ab80171006fc92eeb78d0088a5adc2c2cea868879f6cf6cab7806cc34fa40734"
   solver-name = "gps-cdcl"
   solver-version = 1

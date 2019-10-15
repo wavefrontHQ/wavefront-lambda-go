@@ -7,7 +7,7 @@ Go 1.x
 
 ## Installation
 ```
-go get github.com/wavefrontHQ/wavefront-lambda-go.git
+go get github.com/wavefronthq/wavefront-lambda-go
 ```
 
 ## Environment variables

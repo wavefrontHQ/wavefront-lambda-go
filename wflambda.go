@@ -1,3 +1,18 @@
+// Package wflambda is a Go wrapper library for AWS Lambda so you can monitor everything from your Wavefront (https://wavefront.com)
+// dashboard. The package includes a set of standard metrics it can send to Wavefront and can be extended to send custom metrics using
+// https://github.com/rcrowley/go-metrics.
+//
+// The reported standard metrics are
+//
+// | Metric Name                       |  Type         | Description                                                             |
+// | --------------------------------- | ------------- | ----------------------------------------------------------------------- |
+// | aws.lambda.wf.invocations.count   | Delta Counter | Count of number of lambda function invocations aggregated at the server.|
+// | aws.lambda.wf.errors.count        | Delta Counter | Count of number of errors aggregated at the server.                     |
+// | aws.lambda.wf.coldstarts.count    | Delta Counter | Count of number of cold starts aggregated at the server.                |
+// | aws.lambda.wf.duration.value      | Gauge         | Execution time of the Lambda handler function in milliseconds.          |
+//
+// To connect to Wavefront, you'll need to set the WAVEFRONT_URL and WAVEFRONT_API_TOKEN environment variables. To send the above
+// standard metrics, you'll need to set the environment variable REPORT_STANDARD_METRICS to true.
 package wflambda
 
 import (
@@ -25,17 +40,17 @@ var (
 	durationGauge             metrics.GaugeFloat64
 )
 
-// Returns the Wavefront Lambda wrapper. The wrapper collects aws lambda's
-//   standard metrics and reports it directly to the specified wavefront url. It
-//   requires the following Environment variables to be set:
-//   1.WAVEFRONT_URL : https://<INSTANCE>.wavefront.com
-//   2.WAVEFRONT_API_TOKEN : Wavefront API token with Direct Data Ingestion permission
-//   3.REPORT_STANDARD_METRICS : Set to False to not report standard lambda
-//                                 metrics directly to wavefront.
-
+// Wrapper returns the Wavefront Lambda wrapper. The wrapper collects the AWS Lambda standard metrics and reports it directly to
+// the specified Wavefront URL. To successfully execute the Lambda function and send metrics to Wavefront, the following
+// environment variables should be set:
+//
+// * WAVEFRONT_URL: The URL of your Wavefront instance (like https://myinstance.wavefront.com).
+// * WAVEFRONT_API_TOKEN: Your Wavefront API token (see the [docs](https://docs.wavefront.com/wavefront_api.html) how to create an API token).
+// * REPORT_STANDARD_METRICS: Report standard metrics or not (defaults to true).
 func Wrapper(lambdaHandler interface{}) interface{} {
 	// Validate wrapper environment variables.
 	reportStandardMetrics = getAndValidateLambdaEnvironment()
+
 	// Check if lambdaHandler is a valid handler.
 	handlerTakesContext, err := validateLambdaHandler(lambdaHandler)
 	lambdaHandlerTakesContext = handlerTakesContext
@@ -45,10 +60,11 @@ func Wrapper(lambdaHandler interface{}) interface{} {
 	handlerType = reflect.TypeOf(lambdaHandler)
 	handlerValue = reflect.ValueOf(lambdaHandler)
 
-	//Returns a wavefrontLambda wrapper function with standard lambda metrics.
+	// Returns a wrapper function with standard Lambda metrics.
 	return lambdaHandlerWrapper
 }
 
+// lambdaHandlerWrapper wraps the invocation of the actual AWS Lambda function to collect metrics that can be reported back to Wavefront.
 func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (response interface{}, lambdaHandlerError error) {
 	defer func() {
 		var err interface{}
@@ -87,7 +103,7 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 	}
 
 	if coldStart {
-		// Set cold start counter
+		// Set cold start counter.
 		incrementCounter(csCounter, 1, reportStandardMetrics)
 		coldStart = false
 	}
@@ -118,6 +134,7 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 	return val, err
 }
 
+// lambdaErrorHandler returns a lambdaHandlerFunction to report an error in case the lambdaHandler is not a valid lambdaHandler
 func lambdaErrorHandler(e error) lambdaHandlerFunction {
 	return func(ctx context.Context, event json.RawMessage) (interface{}, error) {
 		return nil, e

@@ -1,74 +1,69 @@
-# wavefront-lambda-go [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go)
+# wavefront-lambda-go
 
-This is a Wavefront Go wrapper for AWS Lambda to enable reporting standard lambda metrics and custom app metrics directly to wavefront.
+[![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/wavefrontHQ/wavefront-lambda-go)](https://goreportcard.com/report/github.com/wavefrontHQ/wavefront-lambda-go)
 
-## Requirements
-Go 1.x
+A Go wrapper for AWS Lambda so you can monitor everything from your [Wavefront](https://wavefront.com) dashboard
 
 ## Installation
-```
+
+Using `go get`
+
+```bash
 go get github.com/wavefronthq/wavefront-lambda-go
 ```
 
-## Environment variables
-WAVEFRONT_URL = https://\<INSTANCE>.wavefront.com  
-WAVEFRONT_API_TOKEN = Wavefront API token with Direct Data Ingestion permission.  
-REPORT_STANDARD_METRICS = Set to False or false to not report standard lambda metrics directly to wavefront.  
-
 ## Usage
 
-Wrap your AWS Lambda handler function with wavefront_lambda.Wrapper(LambdaHandler).
+To connect your Lambda functions to Wavefront, you'll need to set two environment variables, import this module, and wrap your AWS Lambda handler function with `wavefront_lambda.Wrapper(LambdaHandler)`. The environment variables you'll need to set are:
+
+* `WAVEFRONT_URL`: The URL of your Wavefront instance (like, `https://myinstance.wavefront.com`).
+* `WAVEFRONT_API_TOKEN`: Your Wavefront API token (see the [docs](https://docs.wavefront.com/wavefront_api.html) how to create an API token).
 
 ```go
 package main
 
 import (
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/rcrowley/go-metrics"
-	"github.com/wavefronthq/go-metrics-wavefront"
-	"github.com/wavefronthq/wavefront-lambda-go"
+	wflambda "github.com/wavefronthq/wavefront-lambda-go"
 )
 
-// Lambda handler function that includes the code which will be executed when lambda is invoked.
-func HandleLambdaRequest() {
-	// your code
+func handler() (string, error){
+	return "Hello World", nil
 }
 
 func main() {
-	// Wrap your Lambda Handler Function with wflambda.Wrapper
 	lambda.Start(wflambda.Wrapper(HandleLambdaRequest))
 }
 ```
 
-## Standard Lambda Metrics reported by Wavefront Lambda wrapper
+The wrapper will send the below point tags to Wavefront
 
-The Lambda wrapper sends the following standard lambda metrics to wavefront:
+| Point Tag             | Description                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| LambdaArn             | ARN (**Amazon Resource Name**) of the Lambda function.                                     |
+| Region                | AWS Region of the Lambda function.                                                         |
+| accountId             | AWS Account ID from which the Lambda function was invoked.                                 |
+| ExecutedVersion       | The version of Lambda function.                                                            |
+| FunctionName          | The name of Lambda function.                                                               |
+| Resource              | The name and version/alias of Lambda function. (like `DemoLambdaFunc:aliasProd`)           |
+| EventSourceMappings   | AWS Event source mapping Id. (Set in case of Lambda invocation by AWS Poll-Based Services) |
 
-| Metric Name                       |  Type              | Description                                                             |
-| ----------------------------------|:------------------:| ----------------------------------------------------------------------- |
-| aws.lambda.wf.invocations.count   | Delta Counter      | Count of number of lambda function invocations aggregated at the server.|
-| aws.lambda.wf.errors.count        | Delta Counter      | Count of number of errors aggregated at the server.                     |
-| aws.lambda.wf.coldstarts.count    | Delta Counter      | Count of number of cold starts aggregated at the server.                |
-| aws.lambda.wf.duration.value      | Gauge              | Execution time of the Lambda handler function in milliseconds.          |
+## Standard Metrics
 
-The Lambda wrapper adds the following point tags to all metrics sent to wavefront:
+Based on the environment variable `REPORT_STANDARD_METRICS` the wrapper will send standard metrics to Wavefront. Set the variable to to `false` to not send the standard metrics. When the variable is not set, it will use the default value `true`.
 
-| Point Tag             | Description                                                                   |
-| --------------------- | ----------------------------------------------------------------------------- |
-| LambdaArn             | ARN(Amazon Resource Name) of the Lambda function.                             |
-| Region                | AWS Region of the Lambda function.                                            |
-| accountId             | AWS Account ID from which the Lambda function was invoked.                    |
-| ExecutedVersion       | The version of Lambda function.                                               |
-| FunctionName          | The name of Lambda function.                                                  |
-| Resource              | The name and version/alias of Lambda function. (Ex: DemoLambdaFunc:aliasProd) |
-| EventSourceMappings   | AWS Event source mapping Id. (Set in case of Lambda invocation by AWS Poll-Based Services)|
+| Metric Name                       |  Type         | Description                                                             |
+| --------------------------------- | ------------- | ----------------------------------------------------------------------- |
+| aws.lambda.wf.invocations.count   | Delta Counter | Count of number of lambda function invocations aggregated at the server.|
+| aws.lambda.wf.errors.count        | Delta Counter | Count of number of errors aggregated at the server.                     |
+| aws.lambda.wf.coldstarts.count    | Delta Counter | Count of number of cold starts aggregated at the server.                |
+| aws.lambda.wf.duration.value      | Gauge         | Execution time of the Lambda handler function in milliseconds.          |
 
-## Custom Lambda Metrics
+## Custom Metrics
 
-The wavefront Go lambda wrapper reports custom business metrics via API's provided by the [go-metrics-wavefront client] (https://github.com/wavefrontHQ/go-metrics-wavefront).  
-Please refer to the below code sample which shows how you can send custom business metrics to wavefront from your lambda function.
-
-### Code Sample
+You can send custom business metrics to Wavefront using the [go-metrics-wavefront](https://github.com/wavefrontHQ/go-metrics-wavefront) client. The below code reports a _counter_, a _delta counter_, and two _gauges_. All metric names should be unique. If you have metrics that you want to track as both _counter_ and _delta counter_, you'll have to add a suffix to one of the metrics. Having the same metric name for any two types of metrics will result in only one time series at the server and thus cause collisions.
 
 ```go
 package main
@@ -76,12 +71,11 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rcrowley/go-metrics"
-	"github.com/wavefronthq/go-metrics-wavefront"
-	"github.com/wavefronthq/wavefront-lambda-go"
+	wavefront "github.com/wavefronthq/go-metrics-wavefront"
+	wflambda "github.com/wavefronthq/wavefront-lambda-go"
 )
 
-// Lambda handler function that includes the code which will be executed when lambda is invoked.
-func HandleLambdaRequest() {
+func handler() {
 	// Point Tags
 	appTags := map[string]string{
 		"key2":   "val1",
@@ -114,10 +108,6 @@ func HandleLambdaRequest() {
 }
 
 func main() {
-	//Wrapping with wflambda.Wrapper
 	lambda.Start(wflambda.Wrapper(HandleLambdaRequest))
 }
 ```
-
-Note: Having the same metric name for any two types of metrics will result in only one time series at the server and thus cause collisions.
-In general, all metric names should be different. In case you have metrics that you want to track as both a Counter and Delta Counter, consider adding a relevant suffix to one of the metrics to differentiate one metric name from another.

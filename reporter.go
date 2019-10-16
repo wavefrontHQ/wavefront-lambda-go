@@ -12,21 +12,23 @@ import (
 	"github.com/wavefronthq/go-metrics-wavefront"
 )
 
-// Increment counter if report is true
+// incrementCounter increments the counter by the given value if report is true
 func incrementCounter(counter metrics.Counter, value int64, report bool) {
 	if report {
 		counter.Inc(value)
 	}
 }
 
-// Update gauge value if report is true
+// updateGaugeFloat64 increments the counter by the given value if report is true
 func updateGaugeFloat64(gauge metrics.GaugeFloat64, value float64, report bool) {
 	if report {
 		gauge.Update(value)
 	}
 }
 
-// Register the standard lambda metrics.
+// registerStandardLambdaMetrics creates counters and guages for the standard AWS Lambda metrics that are reported
+// to Wavefront. Whether or not the metrics are actually sent to Wavefront is determined by the environment variable
+// REPORT_STANDARD_METRICS.
 func registerStandardLambdaMetrics() {
 	// Register cold start counter.
 	csCounter = metrics.NewCounter()
@@ -38,19 +40,19 @@ func registerStandardLambdaMetrics() {
 	invocationsCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("invocations"))
 	wavefront.RegisterMetric(invocationsCounterName, invocationsCounter, nil)
 
-	// Register Error counter
+	// Register Error counter.
 	errCounter = metrics.NewCounter()
 	errCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("errors"))
 	wavefront.RegisterMetric(errCounterName, errCounter, nil)
 
-	// Register duration gauge
+	// Register duration gauge.
 	durationGauge = metrics.NewGaugeFloat64()
 	wavefront.RegisterMetric(getStandardLambdaMetricName("duration"), durationGauge, nil)
 }
 
-// Method to send all metrics in the registry to wavefront.
+// reportMetrics sends the collected metrics in the registry to Wavefront. Together with the metrics, the
+// default point tags are also sent.
 func reportMetrics(ctx context.Context) {
-	// Get standard lambda point tags
 	lc, ok := lambdacontext.FromContext(ctx)
 	if ok {
 		invokedFunctionArn := lc.InvokedFunctionArn
@@ -66,6 +68,7 @@ func reportMetrics(ctx context.Context) {
 			"Region":          splitArn[3],
 			"accountId":       splitArn[4],
 		}
+
 		if splitArn[5] == "function" {
 			hostTags["Resource"] = splitArn[6]
 			if len(splitArn) == 8 {
@@ -90,28 +93,29 @@ func reportMetrics(ctx context.Context) {
 	}
 }
 
-// Util method that returns the standard lambda metric name.
-// Ex:
-// getStandardLambdaMetricName("invocation", true) returns "aws.lambda.wf.invocation_event"
-// getStandardLambdaMetricName("invocations", false) returns "aws.lambda.wf.invocations"
-
+// getStandardLambdaMetricName adds the standard Wavefront prefix (aws.lambda.wf) to the name of the metric and returns
+// the newly created string.
+// for example, getStandardLambdaMetricName("invocations") returns "aws.lambda.wf.invocations"
 func getStandardLambdaMetricName(metric string) string {
-	const metric_prefix string = "aws.lambda.wf."
-	return strings.Join([]string{metric_prefix, metric}, "")
+	const metricPrefix string = "aws.lambda.wf."
+	return strings.Join([]string{metricPrefix, metric}, "")
 }
 
-// Util method to validate the specified environment variables and return if standard lambda Metrics
-// should be collected by the wrapper.
+// getAndValidateLambdaEnvironment validates whether the required environment variables WAVEFRONT_URL and
+// WAVEFRONT_API_TOKEN have been set. If they are not set, the function will panic. The function also checks
+// whether the environment variable REPORT_STANDARD_METRICS has been set to false (it will default to true).
+// to determine if the standard metrics should be reported.
 func getAndValidateLambdaEnvironment() bool {
-	// Validate environment variables required by wavefrontLambda wrapper.
 	server = os.Getenv("WAVEFRONT_URL")
 	if server == "" {
 		log.Panicf("Environment variable WAVEFRONT_URL is not set.")
 	}
+
 	authToken = os.Getenv("WAVEFRONT_API_TOKEN")
 	if authToken == "" {
 		log.Panicf("Environment variable WAVEFRONT_API_TOKEN is not set.")
 	}
+
 	reportStandardLambdaMetrics := os.Getenv("REPORT_STANDARD_METRICS")
 	reportStandardMetrics := true
 	if reportStandardLambdaMetrics == "False" || reportStandardLambdaMetrics == "false" {

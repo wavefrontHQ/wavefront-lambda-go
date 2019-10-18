@@ -13,9 +13,9 @@ Using `go get`
 go get github.com/wavefronthq/wavefront-lambda-go
 ```
 
-## Usage
+## Basic Usage
 
-To connect your Lambda functions to Wavefront, you'll need to set two environment variables, import this module, and wrap your AWS Lambda handler function with `wavefront_lambda.Wrapper(LambdaHandler)`. The environment variables you'll need to set are:
+To connect your Lambda functions to Wavefront, you'll need to set two environment variables, import this module, and wrap your AWS Lambda handler function with `wflambda.Wrapper(handler)`. The environment variables you'll need to set are:
 
 * `WAVEFRONT_URL`: The URL of your Wavefront instance (like, `https://myinstance.wavefront.com`).
 * `WAVEFRONT_API_TOKEN`: Your Wavefront API token (see the [docs](https://docs.wavefront.com/wavefront_api.html) how to create an API token).
@@ -26,7 +26,7 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	wflambda "github.com/wavefronthq/wavefront-lambda-go"
+	wflambda "github.com/wavefronthq/wavefront-lambda-go" // Import this library
 )
 
 func handler() (string, error){
@@ -34,11 +34,14 @@ func handler() (string, error){
 }
 
 func main() {
-	lambda.Start(wflambda.Wrapper(HandleLambdaRequest))
+	// Wrap the handler with wflambda.Wrapper()
+	lambda.Start(wflambda.Wrapper(handler))
 }
 ```
 
-The wrapper will send the below point tags to Wavefront
+## Standard Point Tags
+
+Point tags are key-value pairs (strings) that are associated with a point. Point tags provide additional context for your data and allow you to fine-tune your queries so the output shows just what you need. The below point tags are sent to Wavefront for each metric.
 
 | Point Tag             | Description                                                                                |
 | --------------------- | ------------------------------------------------------------------------------------------ |
@@ -64,6 +67,8 @@ Based on the environment variable `REPORT_STANDARD_METRICS` the wrapper will sen
 ## Custom Metrics
 
 You can send custom business metrics to Wavefront using the [go-metrics-wavefront](https://github.com/wavefrontHQ/go-metrics-wavefront) client. The below code reports a _counter_, a _delta counter_, and two _gauges_. All metric names should be unique. If you have metrics that you want to track as both _counter_ and _delta counter_, you'll have to add a suffix to one of the metrics. Having the same metric name for any two types of metrics will result in only one time series at the server and thus cause collisions.
+
+The code below imported this module and wrapped the _handler_ function argument in _main_ with `wflambda.Wrapper(handler)`. During each execution four metrics are collected and sent to Wavefront with both the [standard point tags](#standard-point-tags) and the point tags created in the handler.
 
 ```go
 package main
@@ -108,6 +113,6 @@ func handler() {
 }
 
 func main() {
-	lambda.Start(wflambda.Wrapper(HandleLambdaRequest))
+	lambda.Start(wflambda.Wrapper(handler))
 }
 ```

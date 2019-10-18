@@ -26,7 +26,7 @@ func updateGaugeFloat64(gauge metrics.GaugeFloat64, value float64, report bool) 
 	}
 }
 
-// registerStandardLambdaMetrics creates counters and guages for the standard AWS Lambda metrics that are reported
+// registerStandardLambdaMetrics creates counters and gauges for the standard AWS Lambda metrics that are reported
 // to Wavefront. Whether or not the metrics are actually sent to Wavefront is determined by the environment variable
 // REPORT_STANDARD_METRICS.
 func registerStandardLambdaMetrics() {
@@ -50,8 +50,8 @@ func registerStandardLambdaMetrics() {
 	wavefront.RegisterMetric(getStandardLambdaMetricName("duration"), durationGauge, nil)
 }
 
-// reportMetrics sends the collected metrics in the registry to Wavefront. Together with the metrics, the
-// default point tags are also sent.
+// reportMetrics sends the collected metrics in the registry to Wavefront. With each metric,
+// the point tags listed in the README are sent by the reporter.
 func reportMetrics(ctx context.Context) {
 	lc, ok := lambdacontext.FromContext(ctx)
 	if ok {

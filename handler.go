@@ -36,7 +36,8 @@ func validateLambdaHandler(lambdaHandler interface{}) (bool, error) {
 // validateArguments validates whether the arguments passed as part of the lambdaHandler are valid. A valid lambdaHandler
 // has a maximum of two arguments. When there are two arguments, the first one must be a Context. The function returns
 // true or false depending on whether the lambdaHandler has a context argument. If the arguments are not valid, an error
-// is returned.
+// is returned. Detailed information on the valid handler signatures can be found in the AWS Lambda documentation
+// https://docs.aws.amazon.com/lambda/latest/dg/go-programming-model-handler-types.html
 func validateArguments(handler reflect.Type) (bool, error) {
 	handlerTakesContext := false
 	if handler.NumIn() > 2 {
@@ -53,9 +54,11 @@ func validateArguments(handler reflect.Type) (bool, error) {
 	return handlerTakesContext, nil
 }
 
-// validateReturns validates whether the arguments returned by the lambdaHabdler are valid or not. A valid lambdaHandler
+// validateReturns validates whether the arguments returned by the lambdaHandler are valid or not. A valid lambdaHandler
 // returns a maximum of two arguments. When there are two arguments, the second argument must be of type error. When there
-// is only one argument, that one must be of type error.
+// is only one argument, that one must be of type error. Detailed information on the valid handler signatures can be found
+// in the AWS Lambda documentation
+// https://docs.aws.amazon.com/lambda/latest/dg/go-programming-model-handler-types.html
 func validateReturns(handler reflect.Type) error {
 	errorType := reflect.TypeOf((*error)(nil)).Elem()
 	if handler.NumOut() > 2 {

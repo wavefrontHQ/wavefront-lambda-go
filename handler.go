@@ -6,8 +6,9 @@ import (
 	"reflect"
 )
 
-// validateLambdaHandler validates the lambdaHandler is a valid handler. When the handler is valid, the function will check
-// whether a context parameter is used and returns a boolean based on that. If lambdaHandler is not a valid handler, an error
+// validateLambdaHandler validates the lambdaHandler is a valid handler function. When the handler is a valid handler function,
+// the function will check whether one of the arguments is a context. The function returns a non-nil error if lambdaHandler is
+// not a valid handler. When the lambdaHandler is valid, the boolean indicates whether the lambdaHandler has a context parameter.
 // is returned. The code of the function is based on source code at
 // https://github.com/aws/aws-lambda-go/blob/ea03c2814414b2223eff860ed2286a83ed8a195c/lambda/handler.go#L75
 func validateLambdaHandler(lambdaHandler interface{}) (bool, error) {

@@ -29,6 +29,7 @@ type lambdaHandlerFunction func(context.Context, json.RawMessage) (interface{}, 
 var (
 	server                    string
 	authToken                 string
+	enabled                   = true
 	reportStandardMetrics     bool
 	lambdaHandlerTakesContext bool
 	handlerType               reflect.Type
@@ -78,7 +79,9 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 			// Set error counters
 			incrementCounter(errCounter, 1, reportStandardMetrics)
 		}
-		reportMetrics(ctx)
+		if enabled {
+			reportMetrics(ctx)
+		}
 		metrics.DefaultRegistry.UnregisterAll()
 		if err != nil {
 			panic(err)

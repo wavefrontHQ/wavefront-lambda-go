@@ -15,10 +15,11 @@ go get github.com/wavefronthq/wavefront-lambda-go
 
 ## Basic Usage
 
-To connect your Lambda functions to Wavefront, you'll need to set two environment variables, import this module, and wrap your AWS Lambda handler function with `wflambda.Wrapper(handler)`. The environment variables you'll need to set are:
+To connect your Lambda functions to Wavefront, you'll need to set three environment variables, import this module, and wrap your AWS Lambda handler function with `wflambda.Wrapper(handler)`. The environment variables you'll need to set are:
 
 * `WAVEFRONT_URL`: The URL of your Wavefront instance (like, `https://myinstance.wavefront.com`).
 * `WAVEFRONT_API_TOKEN`: Your Wavefront API token (see the [docs](https://docs.wavefront.com/wavefront_api.html) how to create an API token).
+* `WAVEFRONT_ENABLED`: A boolean which determines if data is sent to Wavefront or not (this value defaults to `true` and can be omitted).
 
 ```go
 package main

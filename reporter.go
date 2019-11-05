@@ -9,7 +9,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/rcrowley/go-metrics"
-	"github.com/wavefronthq/go-metrics-wavefront"
+	wavefront "github.com/wavefronthq/go-metrics-wavefront"
 )
 
 // incrementCounter increments the counter by the given value if report is true
@@ -114,6 +114,11 @@ func getAndValidateLambdaEnvironment() bool {
 	authToken = os.Getenv("WAVEFRONT_API_TOKEN")
 	if authToken == "" {
 		log.Panicf("Environment variable WAVEFRONT_API_TOKEN is not set.")
+	}
+
+	reportEnabled := os.Getenv("WAVEFRONT_ENABLED")
+	if reportEnabled == "False" || reportEnabled == "false" {
+		enabled = false
 	}
 
 	reportStandardLambdaMetrics := os.Getenv("REPORT_STANDARD_METRICS")

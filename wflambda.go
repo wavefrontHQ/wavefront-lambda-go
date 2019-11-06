@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/rcrowley/go-metrics"
+	wavefront "github.com/wavefronthq/wavefront-sdk-go/senders"
 )
 
 type lambdaHandlerFunction func(context.Context, json.RawMessage) (interface{}, error)
@@ -35,10 +35,11 @@ var (
 	handlerType               reflect.Type
 	handlerValue              reflect.Value
 	coldStart                 = true
-	csCounter                 metrics.Counter
-	invocationsCounter        metrics.Counter
-	errCounter                metrics.Counter
-	durationGauge             metrics.GaugeFloat64
+	csCounter                 *float64
+	invocationsCounter        *float64
+	errCounter                *float64
+	durationGauge             *float64
+	sender                    wavefront.Sender
 )
 
 // Wrapper returns the Wavefront Lambda wrapper. The wrapper collects the AWS Lambda standard metrics and reports it directly to
@@ -61,8 +62,31 @@ func Wrapper(lambdaHandler interface{}) interface{} {
 	handlerType = reflect.TypeOf(lambdaHandler)
 	handlerValue = reflect.ValueOf(lambdaHandler)
 
+	csCounter = Float()
+	invocationsCounter = Float()
+	errCounter = Float()
+	durationGauge = Float()
+
+	dc := &wavefront.DirectConfiguration{
+		Server:               server,
+		Token:                authToken,
+		BatchSize:            10000,
+		MaxBufferSize:        50000,
+		FlushIntervalSeconds: 1,
+	}
+
+	sender, err = wavefront.NewDirectSender(dc)
+	if err != nil {
+		return lambdaErrorHandler(err)
+	}
+
 	// Returns a wrapper function with standard Lambda metrics.
 	return lambdaHandlerWrapper
+}
+
+func Float() *float64 {
+	f := float64(0)
+	return &f
 }
 
 // lambdaHandlerWrapper wraps the invocation of the actual AWS Lambda function to collect metrics that can be reported back to Wavefront.
@@ -82,7 +106,6 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 		if enabled {
 			reportMetrics(ctx)
 		}
-		metrics.DefaultRegistry.UnregisterAll()
 		if err != nil {
 			panic(err)
 		}
@@ -100,9 +123,6 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 		}
 		elem := paramValue.Elem()
 		args = append(args, elem)
-	}
-	if reportStandardMetrics {
-		registerStandardLambdaMetrics()
 	}
 
 	if coldStart {

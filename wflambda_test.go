@@ -5,14 +5,6 @@ import (
 	"testing"
 )
 
-func TestGetStandardLambdaMetricName(t *testing.T) {
-	actualName := getStandardLambdaMetricName("customMetrics")
-	expectedName := "aws.lambda.wf.customMetrics"
-	if actualName != expectedName {
-		t.Error("Metric names don't match ", expectedName, actualName)
-	}
-}
-
 func TestGetAndValidateLambdaEnvironment(t *testing.T) {
 	os.Setenv("WAVEFRONT_URL", "https://demo.wavefront.com")
 	os.Setenv("WAVEFRONT_API_TOKEN", "demo-api-token")

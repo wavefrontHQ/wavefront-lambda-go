@@ -8,46 +8,20 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/rcrowley/go-metrics"
-	wavefront "github.com/wavefronthq/go-metrics-wavefront"
 )
 
 // incrementCounter increments the counter by the given value if report is true
-func incrementCounter(counter metrics.Counter, value int64, report bool) {
+func incrementCounter(counter *float64, value int64, report bool) {
 	if report {
-		counter.Inc(value)
+		*counter += float64(value)
 	}
 }
 
 // updateGaugeFloat64 increments the counter by the given value if report is true
-func updateGaugeFloat64(gauge metrics.GaugeFloat64, value float64, report bool) {
+func updateGaugeFloat64(gauge *float64, value float64, report bool) {
 	if report {
-		gauge.Update(value)
+		*gauge += float64(value)
 	}
-}
-
-// registerStandardLambdaMetrics creates counters and gauges for the standard AWS Lambda metrics that are reported
-// to Wavefront. Whether or not the metrics are actually sent to Wavefront is determined by the environment variable
-// REPORT_STANDARD_METRICS.
-func registerStandardLambdaMetrics() {
-	// Register cold start counter.
-	csCounter = metrics.NewCounter()
-	csCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("coldstarts"))
-	wavefront.RegisterMetric(csCounterName, csCounter, nil)
-
-	// Register invocations counter.
-	invocationsCounter = metrics.NewCounter()
-	invocationsCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("invocations"))
-	wavefront.RegisterMetric(invocationsCounterName, invocationsCounter, nil)
-
-	// Register Error counter.
-	errCounter = metrics.NewCounter()
-	errCounterName := wavefront.DeltaCounterName(getStandardLambdaMetricName("errors"))
-	wavefront.RegisterMetric(errCounterName, errCounter, nil)
-
-	// Register duration gauge.
-	durationGauge = metrics.NewGaugeFloat64()
-	wavefront.RegisterMetric(getStandardLambdaMetricName("duration"), durationGauge, nil)
 }
 
 // reportMetrics sends the collected metrics in the registry to Wavefront. With each metric,
@@ -78,27 +52,33 @@ func reportMetrics(ctx context.Context) {
 			hostTags["EventSourceMappings"] = splitArn[6]
 		}
 
-		err := wavefront.WavefrontOnce(wavefront.WavefrontConfig{
-			DirectReporter: wavefront.NewDirectReporter(server, authToken),
-			Registry:       metrics.DefaultRegistry,
-			DurationUnit:   time.Nanosecond,
-			Prefix:         "",
-			HostTags:       hostTags,
-		})
+		reportTime := time.Now().Unix()
+
+		err := sender.SendMetric("aws.lambda.wf.coldstarts", *csCounter, reportTime, lambdacontext.FunctionName, hostTags)
 		if err != nil {
 			log.Println("ERROR :: ", err)
 		}
+
+		err = sender.SendMetric("aws.lambda.wf.invocations", *invocationsCounter, reportTime, lambdacontext.FunctionName, hostTags)
+		if err != nil {
+			log.Println("ERROR :: ", err)
+		}
+
+		err = sender.SendMetric("aws.lambda.wf.errors", *errCounter, reportTime, lambdacontext.FunctionName, hostTags)
+		if err != nil {
+			log.Println("ERROR :: ", err)
+		}
+
+		err = sender.SendMetric("aws.lambda.wf.duration", *durationGauge, reportTime, lambdacontext.FunctionName, hostTags)
+		if err != nil {
+			log.Println("ERROR :: ", err)
+		}
+
+		sender.Flush()
+		sender.Close()
 	} else {
 		log.Println("ERROR :: Couldn't report points to wavefront as retrieving lambdaContext from AWS failed.")
 	}
-}
-
-// getStandardLambdaMetricName adds the standard Wavefront prefix (aws.lambda.wf) to the name of the metric and returns
-// the newly created string.
-// for example, getStandardLambdaMetricName("invocations") returns "aws.lambda.wf.invocations"
-func getStandardLambdaMetricName(metric string) string {
-	const metricPrefix string = "aws.lambda.wf."
-	return strings.Join([]string{metricPrefix, metric}, "")
 }
 
 // getAndValidateLambdaEnvironment validates whether the required environment variables WAVEFRONT_URL and

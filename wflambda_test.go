@@ -1,21 +1,20 @@
 package wflambda
 
 import (
+	"context"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAndValidateLambdaEnvironment(t *testing.T) {
+func TestWrapper(t *testing.T) {
+	assert := assert.New(t)
+
 	os.Setenv("WAVEFRONT_URL", "https://demo.wavefront.com")
 	os.Setenv("WAVEFRONT_API_TOKEN", "demo-api-token")
-	os.Setenv("REPORT_STANDARD_METRICS", "False")
-	expected := getAndValidateLambdaEnvironment()
-	if expected != false {
-		t.Error("Validate environmental variables failed ", expected, "False")
-	}
-	os.Setenv("REPORT_STANDARD_METRICS", "true")
-	expected = getAndValidateLambdaEnvironment()
-	if expected != true {
-		t.Error("Validate environmental variables failed ", expected, "true")
-	}
+
+	handler := func(ctx context.Context, payload interface{}) (interface{}, error) { return nil, nil }
+	iface := Wrapper(handler)
+	assert.NotNil(iface)
 }

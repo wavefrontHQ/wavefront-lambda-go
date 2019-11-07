@@ -10,31 +10,32 @@ import (
 	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
-// incrementCounter increments the counter by the given value if report is true
-func incrementCounter(counter *float64, value int64, report bool) {
+// updateCounter increments the value of a given counter if report is true
+func updateCounter(counter *float64, inc int64, report bool) {
 	if report {
-		*counter += float64(value)
+		*counter += float64(inc)
 	}
 }
 
-// updateGaugeFloat64 increments the counter by the given value if report is true
-func updateGaugeFloat64(gauge *float64, value float64, report bool) {
-	if report {
-		*gauge += float64(value)
-	}
-}
-
-// reportMetrics sends the collected metrics in the registry to Wavefront. With each metric,
-// the point tags listed in the README are sent by the reporter.
+// reportMetrics sends the collected metrics to Wavefront. With each metric,
+// the point tags listed in the README are sent as well. Sending metrics relies on the
+// wavefront-go-sdk project. This function is only called when WAVEFRONT_ENABLED is
+// set to true
 func reportMetrics(ctx context.Context) {
 	lc, ok := lambdacontext.FromContext(ctx)
 	if ok {
+		// The reportTime is used for all metrics sent to Wavefront, to ensure all of them
+		// have the same timestamp
+		reportTime := time.Now().Unix()
+
+		// Get the lambdaContext to derive information for the point tags sent to Wavefront
+		// The InvokedFunctionArn contains data on region and account. The expected formats
+		// for Lambda ARN are available in the AWS docs:
+		// https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-lambda
 		invokedFunctionArn := lc.InvokedFunctionArn
 		splitArn := strings.Split(invokedFunctionArn, ":")
 
-		// Expected formats for Lambda ARN are:
-		// https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-lambda
-		hostTags := map[string]string{
+		pointTags := map[string]string{
 			"LambdaArn":       invokedFunctionArn,
 			"source":          lambdacontext.FunctionName,
 			"FunctionName":    lambdacontext.FunctionName,
@@ -44,36 +45,36 @@ func reportMetrics(ctx context.Context) {
 		}
 
 		if splitArn[5] == "function" {
-			hostTags["Resource"] = splitArn[6]
+			pointTags["Resource"] = splitArn[6]
 			if len(splitArn) == 8 {
-				hostTags["Resource"] += ":" + splitArn[7]
+				pointTags["Resource"] += ":" + splitArn[7]
 			}
 		} else if splitArn[5] == "event-source-mappings" {
-			hostTags["EventSourceMappings"] = splitArn[6]
+			pointTags["EventSourceMappings"] = splitArn[6]
 		}
 
-		reportTime := time.Now().Unix()
-
-		err := sender.SendMetric("aws.lambda.wf.coldstarts", *csCounter, reportTime, lambdacontext.FunctionName, hostTags)
+		// Send metrics using a Direct Wavefront Sender
+		err := sender.SendMetric("aws.lambda.wf.coldstarts", *csCounter, reportTime, lambdacontext.FunctionName, pointTags)
 		if err != nil {
-			log.Println("ERROR :: ", err)
+			log.Printf("ERROR :: %s", err.Error())
 		}
 
-		err = sender.SendMetric("aws.lambda.wf.invocations", *invocationsCounter, reportTime, lambdacontext.FunctionName, hostTags)
+		err = sender.SendMetric("aws.lambda.wf.invocations", *invocationsCounter, reportTime, lambdacontext.FunctionName, pointTags)
 		if err != nil {
-			log.Println("ERROR :: ", err)
+			log.Printf("ERROR :: %s", err.Error())
 		}
 
-		err = sender.SendMetric("aws.lambda.wf.errors", *errCounter, reportTime, lambdacontext.FunctionName, hostTags)
+		err = sender.SendMetric("aws.lambda.wf.errors", *errCounter, reportTime, lambdacontext.FunctionName, pointTags)
 		if err != nil {
-			log.Println("ERROR :: ", err)
+			log.Printf("ERROR :: %s", err.Error())
 		}
 
-		err = sender.SendMetric("aws.lambda.wf.duration", *durationGauge, reportTime, lambdacontext.FunctionName, hostTags)
+		err = sender.SendMetric("aws.lambda.wf.duration", *durationGauge, reportTime, lambdacontext.FunctionName, pointTags)
 		if err != nil {
-			log.Println("ERROR :: ", err)
+			log.Printf("ERROR :: %s", err.Error())
 		}
 
+		// Make sure all metrics are actually sent to Wavefront and close the sender
 		sender.Flush()
 		sender.Close()
 	} else {
@@ -83,8 +84,9 @@ func reportMetrics(ctx context.Context) {
 
 // getAndValidateLambdaEnvironment validates whether the required environment variables WAVEFRONT_URL and
 // WAVEFRONT_API_TOKEN have been set. If they are not set, the function will panic. The function also checks
-// whether the environment variable REPORT_STANDARD_METRICS has been set to false (it will default to true).
-// to determine if the standard metrics should be reported.
+// whether the environment variables REPORT_STANDARD_METRICS and WAVEFRONT_ENABLED have been set to false.
+// Both environment variables will default to `true`. REPORT_STANDARD_METRICS determines whether the standard
+// metrics should be reported and WAVEFRONT_ENABLED determines if any data should be sent to Wavefront at all.
 func getAndValidateLambdaEnvironment() bool {
 	server = os.Getenv("WAVEFRONT_URL")
 	if server == "" {
@@ -97,13 +99,13 @@ func getAndValidateLambdaEnvironment() bool {
 	}
 
 	reportEnabled := os.Getenv("WAVEFRONT_ENABLED")
-	if reportEnabled == "False" || reportEnabled == "false" {
+	if strings.EqualFold(reportEnabled, "false") {
 		enabled = false
 	}
 
 	reportStandardLambdaMetrics := os.Getenv("REPORT_STANDARD_METRICS")
 	reportStandardMetrics := true
-	if reportStandardLambdaMetrics == "False" || reportStandardLambdaMetrics == "false" {
+	if strings.EqualFold(reportStandardLambdaMetrics, "false") {
 		reportStandardMetrics = false
 	}
 	return reportStandardMetrics

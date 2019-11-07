@@ -1,6 +1,7 @@
 package wflambda
 
 import (
+	"log"
 	"os"
 
 	wavefront "github.com/wavefronthq/wavefront-sdk-go/senders"
@@ -124,7 +125,10 @@ func NewWavefrontAgent(w *WavefrontConfig) *WavefrontAgent {
 		FlushIntervalSeconds: 1,
 	}
 
-	sender, _ := wavefront.NewDirectSender(dc)
+	sender, err := wavefront.NewDirectSender(dc)
+	if err != nil {
+		log.Printf("ERROR :: %s", err.Error())
+	}
 
 	wfAgent.sender = sender
 	wfAgent.WavefrontConfig = w

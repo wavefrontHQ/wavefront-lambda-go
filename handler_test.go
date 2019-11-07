@@ -17,6 +17,5 @@ func TestHandler(t *testing.T) {
 	wrapper := newHandler(handler)
 	hw := NewHandlerWrapper(handler, wa)
 
-	assert.IsType(hw.originalHandler, handler)
 	assert.IsType(hw.wrappedHandler, wrapper)
 }

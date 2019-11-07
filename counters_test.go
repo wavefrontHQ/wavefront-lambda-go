@@ -13,4 +13,6 @@ func TestCounters(t *testing.T) {
 	assert.NotNil(ctr)
 	ctr.Increment(2)
 	assert.Equal(ctr.val, float64(2))
+	ctr.Increment(-3)
+	assert.Equal(ctr.val, float64(-1))
 }

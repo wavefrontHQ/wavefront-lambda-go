@@ -23,27 +23,29 @@ func wrapHandler(handler interface{}, wa *WavefrontAgent) lambdaHandler {
 	}
 }
 
-// HandlerWrapper
+// HandlerWrapper is the Wavefront Agent handler wrapper
 type HandlerWrapper struct {
-	wavefrontAgent  *WavefrontAgent
-	lambdaContext   *lambdacontext.LambdaContext
-	originalHandler interface{}
-	wrappedHandler  lambdaHandler
+	wavefrontAgent *WavefrontAgent
+	lambdaContext  *lambdacontext.LambdaContext
+	wrappedHandler lambdaHandler
 }
 
-// NewHandlerWrapper creates a new wrapper
+// NewHandlerWrapper creates a new wrapper containing the Wavefront Agent which will send metrics at
+// the end of the execution of the Lambda function and a wrapper handler
 func NewHandlerWrapper(handler interface{}, wa *WavefrontAgent) *HandlerWrapper {
 	return &HandlerWrapper{
-		wavefrontAgent:  wa,
-		originalHandler: handler,
-		wrappedHandler:  newHandler(handler),
+		wavefrontAgent: wa,
+		wrappedHandler: newHandler(handler),
 	}
 }
 
+// Invoke calls the handler, and serializes the response.
+// If the underlying handler returned an error, or an error occurs during serialization, error is returned.
 func (hw *HandlerWrapper) Invoke(ctx context.Context, payload interface{}) (response interface{}, err error) {
 	// Get the lambda context
 	lc, _ := lambdacontext.FromContext(ctx)
 	hw.lambdaContext = lc
+
 	// Get the point tags
 	invokedFunctionArn := hw.lambdaContext.InvokedFunctionArn
 	splitArn := strings.Split(invokedFunctionArn, ":")
@@ -66,15 +68,14 @@ func (hw *HandlerWrapper) Invoke(ctx context.Context, payload interface{}) (resp
 		hw.wavefrontAgent.WavefrontConfig.PointTags["EventSourceMappings"] = splitArn[6]
 	}
 
+	// Defer a function to send error details to Wavefront in case an error occurs during invocation of the function.
 	defer func() {
 		var deferedErr interface{}
 		if e := recover(); e != nil {
 			deferedErr = e
-			// Set error counters
 			errCounter.Increment(1)
 			hw.wavefrontAgent.sender.SendDeltaCounter("aws.lambda.wf.errors", errCounter.val, lambdacontext.FunctionName, hw.wavefrontAgent.WavefrontConfig.PointTags)
 		} else if err != nil {
-			// Set error counters
 			errCounter.Increment(1)
 			hw.wavefrontAgent.sender.SendDeltaCounter("aws.lambda.wf.errors", errCounter.val, lambdacontext.FunctionName, hw.wavefrontAgent.WavefrontConfig.PointTags)
 		}
@@ -109,36 +110,44 @@ func (hw *HandlerWrapper) Invoke(ctx context.Context, payload interface{}) (resp
 
 	hw.wavefrontAgent.counters["aws.lambda.wf.coldstarts"] = csCounter.val
 	hw.wavefrontAgent.counters["aws.lambda.wf.invocations"] = invocationsCounter.val
-	hw.wavefrontAgent.metrics["aws.lambda.wf.duration"] = float64(duration.Milliseconds())
+	hw.wavefrontAgent.metrics["aws.lambda.wf.duration"] = duration.Seconds() * 1000
 
 	memstats := getMemoryStats()
 	hw.wavefrontAgent.metrics["aws.lambda.wf.mem.total"] = memstats.Total
 	hw.wavefrontAgent.metrics["aws.lambda.wf.mem.used"] = memstats.Used
 	hw.wavefrontAgent.metrics["aws.lambda.wf.mem.percentage"] = memstats.UsedPercentage
 
+	// Send all metrics to Wavefront
 	for metricName, metricValue := range hw.wavefrontAgent.metrics {
 		err = hw.wavefrontAgent.sender.SendMetric(metricName, metricValue, reportTime, lambdacontext.FunctionName, hw.wavefrontAgent.WavefrontConfig.PointTags)
 		if err != nil {
-			log.Println("ERROR :: ", err)
+			log.Printf("ERROR :: %s", err.Error())
 		}
 	}
 
+	// Send all counters to Wavefront
 	for metricName, metricValue := range hw.wavefrontAgent.counters {
 		err = hw.wavefrontAgent.sender.SendDeltaCounter(metricName, metricValue, lambdacontext.FunctionName, hw.wavefrontAgent.WavefrontConfig.PointTags)
 		if err != nil {
-			log.Println("ERROR :: ", err)
+			log.Printf("ERROR :: %s", err.Error())
 		}
 	}
 
 	return response, err
 }
 
+// errorHandler returns an error wrapped in a lambdaHandler function.
 func errorHandler(e error) lambdaHandler {
 	return func(ctx context.Context, event interface{}) (interface{}, error) {
 		return nil, e
 	}
 }
 
+// validateArguments validates whether the arguments passed as part of the lambdaHandler are valid. A valid lambdaHandler
+// has a maximum of two arguments. When there are two arguments, the first one must be a Context. The function returns
+// true or false depending on whether the lambdaHandler has a context argument. If the arguments are not valid, an error
+// is returned. Detailed information on the valid handler signatures can be found in the AWS Lambda documentation
+// https://docs.aws.amazon.com/lambda/latest/dg/go-programming-model-handler-types.html
 func validateArguments(handler reflect.Type) (bool, error) {
 	handlerTakesContext := false
 	if handler.NumIn() > 2 {
@@ -155,6 +164,11 @@ func validateArguments(handler reflect.Type) (bool, error) {
 	return handlerTakesContext, nil
 }
 
+// validateReturns validates whether the arguments returned by the lambdaHandler are valid or not. A valid lambdaHandler
+// returns a maximum of two arguments. When there are two arguments, the second argument must be of type error. When there
+// is only one argument, that one must be of type error. Detailed information on the valid handler signatures can be found
+// in the AWS Lambda documentation
+// https://docs.aws.amazon.com/lambda/latest/dg/go-programming-model-handler-types.html
 func validateReturns(handler reflect.Type) error {
 	errorType := reflect.TypeOf((*error)(nil)).Elem()
 	if handler.NumOut() > 2 {

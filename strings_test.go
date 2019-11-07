@@ -11,6 +11,8 @@ func TestStrings(t *testing.T) {
 
 	b := stringToBool("true")
 	assert.True(*b)
+	b = stringToBool("tRuE")
+	assert.True(*b)
 	b = stringToBool("false")
 	assert.False(*b)
 	b = stringToBool("bla")

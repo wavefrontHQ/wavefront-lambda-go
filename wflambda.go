@@ -137,7 +137,7 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 	lambdaResponse := handlerValue.Call(args)
 	executionDuration := time.Since(start)
 	// Set duration gauge value in milliseconds.
-	updateCounter(durationGauge, executionDuration.Milliseconds(), reportStandardMetrics)
+	updateCounter(durationGauge, int64(executionDuration.Seconds()*1000), reportStandardMetrics)
 	if len(lambdaResponse) == 0 {
 		return nil, nil
 	}

@@ -47,9 +47,9 @@ func TestUpdateCounter(t *testing.T) {
 	counter := Float()
 	assert.Equal(*counter, float64(0))
 
-	updateCounter(counter, 2, true)
+	updateMetric(counter, 2, true)
 	assert.Equal(*counter, float64(2))
 
-	updateCounter(counter, -3, true)
+	updateMetric(counter, -3, true)
 	assert.Equal(*counter, float64(-1))
 }

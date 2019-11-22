@@ -67,17 +67,18 @@ Based on the environment variable `REPORT_STANDARD_METRICS` the wrapper will sen
 
 ## Custom Metrics
 
-You can send custom business metrics to Wavefront using the [go-metrics-wavefront](https://github.com/wavefrontHQ/go-metrics-wavefront) client. The below code reports a _counter_, a _delta counter_, and two _gauges_. All metric names should be unique. If you have metrics that you want to track as both _counter_ and _delta counter_, you'll have to add a suffix to one of the metrics. Having the same metric name for any two types of metrics will result in only one time series at the server and thus cause collisions.
+You can send custom business metrics to Wavefront using the [wavefront-sdk-go](https://github.com/wavefronthq/wavefront-sdk-go) client. The below code reports a _counter_ and a _delta counter_. All metric names should be unique. If you have metrics that you want to track as both _counter_ and _delta counter_, you'll have to add a suffix to one of the metrics. Having the same metric name for any two types of metrics will result in only one time series at the server and thus cause collisions.
 
-The code below imported this module and wrapped the _handler_ function argument in _main_ with `wflambda.Wrapper(handler)`. During each execution four metrics are collected and sent to Wavefront with both the [standard point tags](#standard-point-tags) and the point tags created in the handler.
+The code below imported this module and wrapped the _handler_ function argument in _main_ with `wflambda.Wrapper(handler)`. During each execution the metrics are collected and sent to Wavefront using a `DirectSender`.
 
 ```go
 package main
 
 import (
+	"time"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rcrowley/go-metrics"
-	wavefront "github.com/wavefronthq/go-metrics-wavefront"
+	wavefront "github.com/wavefronthq/wavefront-sdk-go/senders"
 	wflambda "github.com/wavefronthq/wavefront-lambda-go"
 )
 
@@ -91,26 +92,30 @@ func handler() {
 		"key3":   "val3",
 	}
 
-	// Register Counter with desired tags.
-	customRawCounter := metrics.NewCounter()
-	wavefront.RegisterMetric("counter", customRawCounter, appTags)
-	customRawCounter.Inc(1)
+	dc := &wavefront.DirectConfiguration{
+		Server:               server, // Wavefront URL of the form https://<INSTANCE>.wavefront.com
+		Token:                authToken, // Wavefront API token with direct data ingestion permission
+		BatchSize:            10000,
+		MaxBufferSize:        50000,
+		FlushIntervalSeconds: 1,
+	}
 
-	// Register Delta Counter with desired tags.
-	customDeltaCounter := metrics.NewCounter()
-	deltaCounterName := wavefront.DeltaCounterName("deltaCounter")
-	wavefront.RegisterMetric(deltaCounterName, customDeltaCounter, appTags)
-	customDeltaCounter.Inc(1)
+	sender, err := wavefront.NewDirectSender(dc)
+	if err != nil {
+		log.Printf("ERROR :: %s", err.Error())
+	}
 
-	// Register Gauge with desired tags.
-	gaugeValue := metrics.NewGauge()
-	wavefront.RegisterMetric("gaugeValue", gaugeValue, appTags)
-	gaugeValue.Update(551)
+	// Send metrics using a Direct Wavefront Sender. The <source> will allow you to filter data in the Wavefront UI
+	// A DeltaCounter is aggragated at the Wavefront server
+	err = sender.SendDeltaCounter("the.answer", 42, "<source>", appTags)
+	if err != nil {
+		log.Printf("ERROR :: %s", err.Error())
+	}
 
-	// Register Float Gauge with desired tags.
-	gaugeFloatValue := metrics.NewGaugeFloat64()
-	wavefront.RegisterMetric("gaugeFloatValue", gaugeFloatValue, appTags)
-	gaugeFloatValue.Update(551.4)
+	err = sender.SendMetric("pizzas.needed", 2, time.Now().Unix(), "<source>", appTags)
+	if err != nil {
+		log.Printf("ERROR :: %s", err.Error())
+	}
 }
 
 func main() {

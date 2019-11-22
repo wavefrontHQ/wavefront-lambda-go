@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	wavefront "github.com/wavefronthq/wavefront-sdk-go/senders"
 )
 
-// updateCounter increments the value of a given counter if report is true
-func updateCounter(counter *float64, inc int64, report bool) {
+// updateMetric increments the value of a given metric if report is true
+func updateMetric(metric *float64, inc int64, report bool) {
 	if report {
-		*counter += float64(inc)
+		*metric += float64(inc)
 	}
 }
 
@@ -24,6 +25,20 @@ func updateCounter(counter *float64, inc int64, report bool) {
 func reportMetrics(ctx context.Context) {
 	lc, ok := lambdacontext.FromContext(ctx)
 	if ok {
+		dc := &wavefront.DirectConfiguration{
+			Server:               server,
+			Token:                authToken,
+			BatchSize:            10000,
+			MaxBufferSize:        50000,
+			FlushIntervalSeconds: 1,
+		}
+
+		sender, err := wavefront.NewDirectSender(dc)
+		if err != nil {
+			log.Printf("ERROR :: %s", err.Error())
+			return
+		}
+
 		// The reportTime is used for all metrics sent to Wavefront, to ensure all of them
 		// have the same timestamp
 		reportTime := time.Now().Unix()
@@ -54,17 +69,17 @@ func reportMetrics(ctx context.Context) {
 		}
 
 		// Send metrics using a Direct Wavefront Sender
-		err := sender.SendMetric("aws.lambda.wf.coldstarts", *csCounter, reportTime, lambdacontext.FunctionName, pointTags)
+		err = sender.SendDeltaCounter("aws.lambda.wf.coldstarts", *csCounter, lambdacontext.FunctionName, pointTags)
 		if err != nil {
 			log.Printf("ERROR :: %s", err.Error())
 		}
 
-		err = sender.SendMetric("aws.lambda.wf.invocations", *invocationsCounter, reportTime, lambdacontext.FunctionName, pointTags)
+		err = sender.SendDeltaCounter("aws.lambda.wf.invocations", *invocationsCounter, lambdacontext.FunctionName, pointTags)
 		if err != nil {
 			log.Printf("ERROR :: %s", err.Error())
 		}
 
-		err = sender.SendMetric("aws.lambda.wf.errors", *errCounter, reportTime, lambdacontext.FunctionName, pointTags)
+		err = sender.SendDeltaCounter("aws.lambda.wf.errors", *errCounter, lambdacontext.FunctionName, pointTags)
 		if err != nil {
 			log.Printf("ERROR :: %s", err.Error())
 		}
@@ -83,11 +98,19 @@ func reportMetrics(ctx context.Context) {
 }
 
 // getAndValidateLambdaEnvironment validates whether the required environment variables WAVEFRONT_URL and
-// WAVEFRONT_API_TOKEN have been set. If they are not set, the function will panic. The function also checks
+// WAVEFRONT_API_TOKEN have been set if WAVEFRONT_ENABLED is set to true. The function also checks
 // whether the environment variables REPORT_STANDARD_METRICS and WAVEFRONT_ENABLED have been set to false.
 // Both environment variables will default to `true`. REPORT_STANDARD_METRICS determines whether the standard
 // metrics should be reported and WAVEFRONT_ENABLED determines if any data should be sent to Wavefront at all.
+// If the WAVEFRONT_ENABLED flag is set to false, all other checks are skipped because no metrics will be
+// emitted.
 func getAndValidateLambdaEnvironment() bool {
+	reportEnabled := os.Getenv("WAVEFRONT_ENABLED")
+	if strings.EqualFold(reportEnabled, "false") {
+		enabled = false
+		return false
+	}
+
 	server = os.Getenv("WAVEFRONT_URL")
 	if server == "" {
 		log.Panicf("Environment variable WAVEFRONT_URL is not set.")
@@ -96,11 +119,6 @@ func getAndValidateLambdaEnvironment() bool {
 	authToken = os.Getenv("WAVEFRONT_API_TOKEN")
 	if authToken == "" {
 		log.Panicf("Environment variable WAVEFRONT_API_TOKEN is not set.")
-	}
-
-	reportEnabled := os.Getenv("WAVEFRONT_ENABLED")
-	if strings.EqualFold(reportEnabled, "false") {
-		enabled = false
 	}
 
 	reportStandardLambdaMetrics := os.Getenv("REPORT_STANDARD_METRICS")

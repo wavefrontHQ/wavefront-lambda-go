@@ -20,8 +20,6 @@ import (
 	"encoding/json"
 	"reflect"
 	"time"
-
-	wavefront "github.com/wavefronthq/wavefront-sdk-go/senders"
 )
 
 type lambdaHandlerFunction func(context.Context, json.RawMessage) (interface{}, error)
@@ -39,7 +37,6 @@ var (
 	invocationsCounter        *float64
 	errCounter                *float64
 	durationGauge             *float64
-	sender                    wavefront.Sender
 )
 
 // Wrapper returns the Wavefront Lambda wrapper. The wrapper collects the AWS Lambda standard metrics and reports it directly to
@@ -68,19 +65,6 @@ func Wrapper(lambdaHandler interface{}) interface{} {
 	errCounter = Float()
 	durationGauge = Float()
 
-	dc := &wavefront.DirectConfiguration{
-		Server:               server,
-		Token:                authToken,
-		BatchSize:            10000,
-		MaxBufferSize:        50000,
-		FlushIntervalSeconds: 1,
-	}
-
-	sender, err = wavefront.NewDirectSender(dc)
-	if err != nil {
-		return lambdaErrorHandler(err)
-	}
-
 	// Returns a wrapper function with standard Lambda metrics.
 	return lambdaHandlerWrapper
 }
@@ -99,10 +83,10 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 		if e := recover(); e != nil {
 			err = e
 			// Set error counters
-			updateCounter(errCounter, 1, reportStandardMetrics)
+			updateMetric(errCounter, 1, reportStandardMetrics)
 		} else if lambdaHandlerError != nil {
 			// Set error counters
-			updateCounter(errCounter, 1, reportStandardMetrics)
+			updateMetric(errCounter, 1, reportStandardMetrics)
 		}
 		if enabled {
 			reportMetrics(ctx)
@@ -128,16 +112,16 @@ func lambdaHandlerWrapper(ctx context.Context, payload json.RawMessage) (respons
 
 	if coldStart {
 		// Set cold start counter.
-		updateCounter(csCounter, 1, reportStandardMetrics)
+		updateMetric(csCounter, 1, reportStandardMetrics)
 		coldStart = false
 	}
 	// Set invocations counter.
-	updateCounter(invocationsCounter, 1, reportStandardMetrics)
+	updateMetric(invocationsCounter, 1, reportStandardMetrics)
 	start := time.Now()
 	lambdaResponse := handlerValue.Call(args)
 	executionDuration := time.Since(start)
 	// Set duration gauge value in milliseconds.
-	updateCounter(durationGauge, int64(executionDuration.Seconds()*1000), reportStandardMetrics)
+	updateMetric(durationGauge, int64(executionDuration.Seconds()*1000), reportStandardMetrics)
 	if len(lambdaResponse) == 0 {
 		return nil, nil
 	}

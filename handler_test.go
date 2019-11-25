@@ -2,19 +2,20 @@ package wflambda
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWrapper(t *testing.T) {
+func TestHandler(t *testing.T) {
 	assert := assert.New(t)
 
-	os.Setenv("WAVEFRONT_URL", "https://demo.wavefront.com")
-	os.Setenv("WAVEFRONT_API_TOKEN", "demo-api-token")
+	wa := NewWavefrontAgent(&WavefrontConfig{})
+	assert.NotNil(wa)
 
 	handler := func(ctx context.Context, payload interface{}) (interface{}, error) { return nil, nil }
-	iface := Wrapper(handler)
-	assert.NotNil(iface)
+	wrapper := newHandler(handler)
+	hw := NewHandlerWrapper(handler, wa)
+
+	assert.IsType(hw.wrappedHandler, wrapper)
 }

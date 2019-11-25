@@ -1,8 +1,8 @@
 # wavefront-lambda-go
 
-[![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wavefrontHQ/wavefront-lambda-go)](https://goreportcard.com/report/github.com/wavefrontHQ/wavefront-lambda-go)
-[![GoDoc reference](https://godoc.org/github.com/wavefrontHQ/wavefront-lambda-go?status.svg)](https://godoc.org/github.com/wavefrontHQ/wavefront-lambda-go)
+[![travis build status](https://travis-ci.com/retgits/wavefront-lambda-go.svg?branch=master)](https://travis-ci.com/retgits/wavefront-lambda-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/retgits/wavefront-lambda-go)](https://goreportcard.com/report/github.com/retgits/wavefront-lambda-go)
+[![GoDoc reference](https://godoc.org/github.com/retgits/wavefront-lambda-go?status.svg)](https://godoc.org/github.com/retgits/wavefront-lambda-go)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 
 > A Go wrapper for AWS Lambda so you can monitor everything from your [Wavefront](https://wavefront.com) dashboard.
@@ -14,7 +14,7 @@ The package `wavefront-lambda-go` provides a Go wrapper for AWS Lambda function 
 Using `go get`
 
 ```bash
-go get github.com/wavefronthq/wavefront-lambda-go
+go get github.com/retgits/wavefront-lambda-go
 ```
 
 ## Prerequisites
@@ -35,7 +35,7 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	wflambda "github.com/wavefronthq/wavefront-lambda-go" // Import this library
+	wflambda "github.com/retgits/wavefront-lambda-go" // Import this library
 )
 
 var wfAgent = wflambda.NewWavefrontAgent(&wflambda.WavefrontConfig{})
@@ -89,7 +89,7 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	wflambda "github.com/wavefronthq/wavefront-lambda-go" // Import this library
+	wflambda "github.com/retgits/wavefront-lambda-go" // Import this library
 )
 
 var tags = map[string]string{
@@ -139,7 +139,7 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	wflambda "github.com/wavefronthq/wavefront-lambda-go" // Import this library
+	wflambda "github.com/retgits/wavefront-lambda-go" // Import this library
 )
 
 var wfAgent = wflambda.NewWavefrontAgent(&wflambda.WavefrontConfig{})
@@ -162,7 +162,7 @@ func main() {
 
 ## Contributing
 
-[Pull requests](https://github.com/wavefrontHQ/wavefront-lambda-go/pulls) are welcome. For major changes, please open [an issue](https://github.com/wavefrontHQ/wavefront-lambda-go/issues) first to discuss what you would like to change.
+[Pull requests](https://github.com/retgits/wavefront-lambda-go/pulls) are welcome. For major changes, please open [an issue](https://github.com/retgits/wavefront-lambda-go/issues) first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 

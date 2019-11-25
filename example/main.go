@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
-	wflambda "github.com/wavefronthq/wavefront-lambda-go"
+	wflambda "github.com/retgits/wavefront-lambda-go"
 )
 
 var (

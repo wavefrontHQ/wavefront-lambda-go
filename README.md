@@ -5,7 +5,7 @@
 [![GoDoc reference](https://godoc.org/github.com/wavefrontHQ/wavefront-lambda-go?status.svg)](https://godoc.org/github.com/wavefrontHQ/wavefront-lambda-go)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 
-> A Go wrapper for AWS Lambda so you can monitor everything from your [Wavefront](https://wavefront.com) dashboard
+> A Go wrapper for AWS Lambda so you can monitor everything from your [Wavefront](https://wavefront.com) dashboard.
 
 The package `wavefront-lambda-go` provides a Go wrapper for AWS Lambda function so you can monitor the three pillars of observability from your [Wavefront](https://wavefront.com) dashboard.
 

@@ -146,10 +146,12 @@ func (wa *WavefrontAgent) WrapHandler(handler interface{}) interface{} {
 	return wrapHandler(handler, wa)
 }
 
+// RegisterMetric adds a new metric to be sent to Wavefront
 func (wa *WavefrontAgent) RegisterMetric(name string, value float64) {
 	wa.metrics[name] = value
 }
 
+// RegisterCounter adds a new DeltaCounter to be sent to Wavefront
 func (wa *WavefrontAgent) RegisterCounter(name string, value float64) {
 	wa.counters[name] = value
 }

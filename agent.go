@@ -57,8 +57,9 @@ var (
 func NewWavefrontAgent(w *WavefrontConfig) *WavefrontAgent {
 	// Create a new instance of the WavefrontAgent.
 	wfAgent := &WavefrontAgent{
-		metrics:  make(map[string]float64),
-		counters: make(map[string]float64),
+		metrics:         make(map[string]float64),
+		counters:        make(map[string]float64),
+		WavefrontConfig: w,
 	}
 
 	// Create an empty map of point tags if no tags exist yet.
@@ -77,6 +78,11 @@ func NewWavefrontAgent(w *WavefrontConfig) *WavefrontAgent {
 	}
 	if envEnabled != "" {
 		enabled = stringToBool(envEnabled)
+	}
+
+	wfAgent.WavefrontConfig.Enabled = enabled
+	if !*enabled {
+		return wfAgent
 	}
 
 	envServer := os.Getenv("WAVEFRONT_URL")
@@ -131,14 +137,12 @@ func NewWavefrontAgent(w *WavefrontConfig) *WavefrontAgent {
 	}
 
 	wfAgent.sender = sender
-	wfAgent.WavefrontConfig = w
-	wfAgent.WavefrontConfig.Enabled = enabled
 
 	return wfAgent
 }
 
-// WrapHandler wraps the handler
-func (wa *WavefrontAgent) WrapHandler(handler interface{}) interface{} {
+// Wrapper wraps the handler
+func (wa *WavefrontAgent) Wrapper(handler interface{}) interface{} {
 	if !*wa.Enabled {
 		return handler
 	}

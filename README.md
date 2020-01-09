@@ -7,8 +7,6 @@
 
 > A Go wrapper for AWS Lambda so you can monitor everything from your [Wavefront](https://wavefront.com) dashboard.
 
-The package `wavefront-lambda-go` provides a Go wrapper for AWS Lambda function so you can monitor the three pillars of observability from your [Wavefront](https://wavefront.com) dashboard.
-
 ## Installation
 
 Using `go get`
@@ -24,7 +22,7 @@ go get github.com/retgits/wavefront-lambda-go
 
 ## Basic Usage
 
-To let you your Lambda functions send metrics to Wavefront, you'll need to set two environment variables, import this module, and wrap your AWS Lambda handler function with `wfAgent.WrapHandler(handler)`. The environment variables you'll need to set are:
+To let your Lambda functions send metrics to Wavefront, you'll need to set two environment variables, import this module, and wrap your AWS Lambda handler function with `wfAgent.WrapHandler(handler)`. The environment variables you'll need to set are:
 
 * `WAVEFRONT_URL`: The URL of your Wavefront instance (like, `https://myinstance.wavefront.com`).
 * `WAVEFRONT_API_TOKEN`: Your Wavefront API token (see the [docs](https://docs.wavefront.com/wavefront_api.html) how to create an API token).
@@ -67,7 +65,7 @@ Point tags are key-value pairs (strings) that are associated with a point. Point
 
 ### Standard Point Tags
 
-The below point tags are automatically added to all data sent to Wavefront. You can add more point tags, by creating the passing in a `map[string]string` when you create a new Wavefront Agent.
+The below point tags are automatically added to all data sent to Wavefront. You can add more point tags, by passing in a `map[string]string` when you create a new Wavefront Agent.
 
 | Point Tag             | Description                                                                                |
 | --------------------- | ------------------------------------------------------------------------------------------ |
@@ -81,7 +79,7 @@ The below point tags are automatically added to all data sent to Wavefront. You 
 
 ### Custom Point Tags
 
-You can add custom point tags either while instantiating the agent or inside your handler.
+While all metrics emitted to Wavefront have the Standard Point Tags mentioned above, you can add custom point tags either while instantiating the agent or inside your handler.
 
 ```go
 package main
@@ -92,6 +90,8 @@ import (
 	wflambda "github.com/retgits/wavefront-lambda-go" // Import this library
 )
 
+// Create a map to hold additional tags.
+// All standard tags are sent to Wavefront too.
 var tags = map[string]string{
 	"MyTag": "NewTag",
 }
@@ -101,7 +101,8 @@ var wfAgent = wflambda.NewWavefrontAgent(&wflambda.WavefrontConfig{
 })
 
 func handler() (string, error){
-	// You also can add point tags from inside your handler function
+	// You also can add additional point tags from inside your handler function.
+	// All standard tags are sent to Wavefront too.
 	wfAgent.WavefrontConfig.PointTags["NewPointTag"] = "MyCustomTag"
 
 	return "Hello World", nil

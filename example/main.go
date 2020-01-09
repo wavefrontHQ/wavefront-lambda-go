@@ -58,5 +58,5 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 }
 
 func main() {
-	lambda.Start(wfAgent.WrapHandler(handler))
+	lambda.Start(wfAgent.Wrapper(handler))
 }

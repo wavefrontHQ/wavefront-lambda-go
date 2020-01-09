@@ -68,6 +68,6 @@ func TestAgent(t *testing.T) {
 
 	wa = NewWavefrontAgent(&WavefrontConfig{Enabled: stringToBool("false")})
 	assert.NotNil(wa)
-	iface := wa.WrapHandler("bla")
+	iface := wa.Wrapper("bla")
 	assert.Equal(iface.(string), "bla")
 }

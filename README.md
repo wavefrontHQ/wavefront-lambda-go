@@ -1,3 +1,7 @@
+> **Warning**
+>
+> VMware has ended active development of this project. this repository will no longer be updated.
+
 # wavefront-lambda-go
 
 [![travis build status](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go.svg?branch=master)](https://travis-ci.com/wavefrontHQ/wavefront-lambda-go)
